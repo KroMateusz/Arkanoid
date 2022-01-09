@@ -38,6 +38,9 @@ import {
 import {
 	Ball
 } from './Ball.esm.js';
+import {
+	GameState
+} from './GameState.esm.js';
 
 const PLAYER_SPEED = 10;
 
@@ -52,9 +55,7 @@ class Game extends Common {
 		this.background = new Sprite(0, 33, 800, 450, media.spriteImage, 0, 0);
 		this.paddle = new Paddle();
 		this.ball = new Ball();
-		this.gameState = {
-			isGamePaused: false
-		};
+		this.gameState = new GameState(level);
 		// this.gameState = new GameState();
 		this.changeVisibilityScreen(canvas.element, VISIBLE_SCREEN);
 		this.changeVisibilityScreen(mainMenu.miniSettingsLayerElement, VISIBLE_SCREEN);
@@ -66,6 +67,7 @@ class Game extends Common {
 	animate() {
 		this.ball.moveAndCheckCollision();
 		this.handleKeyboardClick();
+		this.checkCollisionBallWithPaddle();
 		this.drawSprites();
 		this.checkEndOfGame();
 	}
@@ -98,8 +100,29 @@ class Game extends Common {
 		}
 	}
 
+	checkCollisionBallWithPaddle() {
+		const {
+			dx,
+			dy
+		} = this.ball;
+
+		if (this.ball.dy < 0) {
+			return;
+		}
+
+		const vector = {
+			dx,
+			dy
+		}
+
+		if (this.ball.checkCollisionWithAnotherSprite(vector, this.paddle)) {
+			this.ball.dy = -(Math.floor(Math.random() * 3) + 3);
+		}
+	}
+
 	drawSprites() {
 		this.background.draw(0, 1.25);
+		this.gameState.getGameBoard().forEach(block => block.draw());
 		this.ball.draw();
 		this.paddle.draw();
 	}
@@ -108,38 +131,10 @@ class Game extends Common {
 		if (this.ball.hadHitOnBottomEdge()) {
 			media.isInLevel = false;
 			media.stopBackgroundMusic();
-			resultScreen.viewResultScreen(true);
+			resultScreen.viewResultScreen(false);
 		} else {
 			this.animationFrame = window.requestAnimationFrame(() => this.animate());
 		}
-	}
-
-	swap(firstDiamond, secondDiamond) {
-		[
-			firstDiamond.kind,
-			firstDiamond.alpha,
-			firstDiamond.match,
-			firstDiamond.x,
-			firstDiamond.y,
-			secondDiamond.kind,
-			secondDiamond.alpha,
-			secondDiamond.match,
-			secondDiamond.x,
-			secondDiamond.y,
-		] = [
-			secondDiamond.kind,
-			secondDiamond.alpha,
-			secondDiamond.match,
-			secondDiamond.x,
-			secondDiamond.y,
-			firstDiamond.kind,
-			firstDiamond.alpha,
-			firstDiamond.match,
-			firstDiamond.x,
-			firstDiamond.y,
-		];
-
-		this.gameState.setIsMoving(true);
 	}
 }
 
